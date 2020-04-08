@@ -40,6 +40,7 @@ func GetPersonEndpoint(w http.ResponseWriter, req *http.Request) {
 	for _, item := range people {
 		if item.ID == id {
 			res = item
+			break
 		}
 	}
 
@@ -48,13 +49,28 @@ func GetPersonEndpoint(w http.ResponseWriter, req *http.Request) {
 
 // AddPersonEndpoint Add a new person
 func AddPersonEndpoint(w http.ResponseWriter, req *http.Request) {
-	// params := mux.Vars(req)
 	var person Person
 	json.NewDecoder(req.Body).Decode(&person)
 	person.ID = len(people) + 1
 
 	people = append(people, person)
+
 	json.NewEncoder(w).Encode(person)
+}
+
+// DeletePersonEndpoint Delete a person
+func DeletePersonEndpoint(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	id, _ := strconv.Atoi(params["id"])
+
+	for index, item := range people {
+		if item.ID == id {
+			people = append(people[:index], people[index+1:]...)
+			break
+		}
+	}
+
+	json.NewEncoder(w).Encode(people)
 }
 
 func main() {
@@ -68,6 +84,7 @@ func main() {
 	router.HandleFunc("/people", GetPeopleEndpoint).Methods("GET")
 	router.HandleFunc("/people/{id}", GetPersonEndpoint).Methods("GET")
 	router.HandleFunc("/people", AddPersonEndpoint).Methods("POST")
+	router.HandleFunc("/people/{id}", DeletePersonEndpoint).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":4000", router))
 }
